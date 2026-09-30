@@ -69,3 +69,19 @@ test.describe('Smoke tests', () => {
     await expect(page.locator('text=404')).toBeVisible()
   })
 })
+
+test('Proofboard landing and signed-out home show the product', async ({ page }) => {
+  await page.goto('/')
+  await expect(page.getByRole('heading', { name: /make the call together/i })).toBeVisible()
+  await page.getByRole('link', { name: /start a decision/i }).click()
+  await expect(page.getByRole('heading', { name: 'Open questions' })).toBeVisible()
+  await expect(page.getByText('How should we spend our next team day?')).toBeVisible()
+})
+
+test('decision room is gated for signed-out visitors', async ({ page }) => {
+  await page.goto('/boards/example-board')
+  await expect(page.getByRole('heading', { name: 'Sign in to continue' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Board not found' })).toHaveCount(0)
+  await page.getByRole('main').getByRole('button', { name: 'Sign in' }).click()
+  await expect(page.getByTestId('auth-overlay')).toBeVisible()
+})

@@ -196,4 +196,16 @@ test('two people build a decision and see each other’s changes', async ({ user
   await outcomeDialog.getByRole('button', { name: 'Save outcome' }).click()
   await expect(b.page.getByText(outcome)).toBeVisible()
   await expect(b.page.getByText('Outcome recorded')).toBeVisible()
+
+  // Optional visual QA artifact. The regular test run does not write screenshots.
+  const captureDir = process.env.PROOFBOARD_CAPTURE_DIR
+  if (captureDir) {
+    await a.page.waitForTimeout(6_000) // let success toasts and dialog exit animations settle
+    await a.page.setViewportSize({ width: 1440, height: 900 })
+    await a.page.screenshot({ path: `${captureDir}/board-desktop.png` })
+    await a.page.setViewportSize({ width: 390, height: 844 })
+    await a.page.screenshot({ path: `${captureDir}/board-mobile.png` })
+    await a.page.locator('main').evaluate((element) => { element.scrollTop = 730 })
+    await a.page.screenshot({ path: `${captureDir}/board-mobile-scrolled.png` })
+  }
 })

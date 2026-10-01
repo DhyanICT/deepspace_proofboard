@@ -82,7 +82,10 @@ test('API status page renders loading success and error states', async ({ users 
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ success: true, data: { integrations: { openai: {}, wikipedia: {} } } }),
+      body: JSON.stringify({
+        success: true,
+        data: { integrations: { openai: {}, wikipedia: {} } },
+      }),
     })
   })
 
@@ -130,4 +133,67 @@ test('API status page shows local retry after first-load API failure', async ({ 
   await retryButton.click()
   await expect.poll(() => requestCount).toBeGreaterThan(requestsAfterFailure)
   expect(user.page.url()).toBe(urlAfterFailure)
+})
+
+test('two people build a decision and see each other’s changes', async ({ users }) => {
+  test.setTimeout(90_000)
+  const [a, b] = await users(2)
+  const marker = `__test-${Date.now()}__`
+  const boardTitle = `${marker} Team day`
+  const firstOption = `${marker} Studio day`
+  const secondOption = `${marker} Short offsite`
+  const reason = `${marker} Less travel time gives us more time together.`
+  const outcome = `${marker} We chose a short offsite because the group preferred a change of scene.`
+
+  await Promise.all([a.page.goto('/home'), b.page.goto('/home')])
+  await a.page.getByRole('button', { name: 'New decision' }).click()
+  const newBoard = a.page.getByRole('dialog', { name: 'Start a decision' })
+  await newBoard.getByLabel('Short title').fill(boardTitle)
+  await newBoard.getByLabel('Decision question').fill('Where should we spend our next team day?')
+  await newBoard.getByRole('button', { name: 'Create board' }).click()
+  await expect(a.page).toHaveURL(/\/boards\//)
+  const boardUrl = a.page.url()
+
+  await b.page.goto(boardUrl)
+  await expect(b.page.getByRole('heading', { name: boardTitle })).toBeVisible()
+  await expect(a.page.getByText('2 people here')).toBeVisible({ timeout: 15_000 })
+
+  async function addOption(page: typeof a.page, title: string) {
+    await page.getByRole('button', { name: 'Add option' }).first().click()
+    const dialog = page.getByRole('dialog', { name: 'Add an option' })
+    await dialog.getByLabel('Option name').fill(title)
+    await dialog.getByRole('button', { name: 'Add option' }).click()
+    await expect(page.getByRole('heading', { name: title })).toBeVisible()
+  }
+
+  await addOption(a.page, firstOption)
+  await expect(b.page.getByRole('heading', { name: firstOption })).toBeVisible()
+  await addOption(a.page, secondOption)
+  await expect(b.page.getByRole('heading', { name: secondOption })).toBeVisible()
+
+  const firstOnA = a.page.locator('article').filter({ hasText: firstOption })
+  await firstOnA.getByRole('button', { name: 'Add reason' }).click()
+  const reasonDialog = a.page.getByRole('dialog', { name: 'Add a reason' })
+  await reasonDialog.getByLabel('Your reason').fill(reason)
+  await reasonDialog.getByRole('button', { name: 'Add reason' }).click()
+  await expect(b.page.getByText(reason)).toBeVisible()
+
+  await firstOnA.getByRole('button', { name: 'Vote for this' }).click()
+  const secondOnB = b.page.locator('article').filter({ hasText: secondOption })
+  await secondOnB.getByRole('button', { name: 'Vote for this' }).click()
+  await expect(a.page.getByText('2 people have voted.')).toBeVisible()
+  await a.page
+    .locator('article')
+    .filter({ hasText: secondOption })
+    .getByRole('button', { name: 'Change vote' })
+    .click()
+  await expect(secondOnB.getByText('2 votes')).toBeVisible()
+  await expect(b.page.getByText('2 people have voted.')).toBeVisible()
+
+  await a.page.getByRole('button', { name: 'Record outcome' }).click()
+  const outcomeDialog = a.page.getByRole('dialog', { name: 'Record outcome' })
+  await outcomeDialog.getByLabel('Decision and reasoning').fill(outcome)
+  await outcomeDialog.getByRole('button', { name: 'Save outcome' }).click()
+  await expect(b.page.getByText(outcome)).toBeVisible()
+  await expect(b.page.getByText('Outcome recorded')).toBeVisible()
 })

@@ -2,6 +2,10 @@
 
 Proofboard is a small shared workspace for decisions that need a visible rationale. A group frames a question, adds concrete options, collects reasons for and against, casts one editable vote per person, and records the outcome.
 
+**Live app:** https://proofboard-dhyan.app.space
+
+**Reviewer demo:** https://proofboard-dhyan.app.space/boards/1790878325225-0j0rmnaww (sign in to view)
+
 ## Working flow
 
 1. Sign in and create a board with a title, question, and optional context.
@@ -26,12 +30,15 @@ Use Node 24 and npm 11.6 or newer. Install with `npm install`, authenticate with
 - `npm run build`
 - `npx deepspace test run` — smoke and API checks
 - `npx deepspace test run tests/collab.spec.ts` — two-user flow, including live options, reasons, vote changes, presence, and outcome
+- `npx playwright test --config tests/live.config.ts` — check the deployed app with two CLI test accounts. Its first run creates the reviewer demo board; later runs verify that board and its saved outcome.
 
 Test accounts are managed by the DeepSpace CLI outside this repository. The collaboration test prefixes its created board with `__test-` so test data is recognizable in local development.
 
-## Remaining before submission
+## Release and verification
 
-Do a final visual and mobile pass, verify the deployed core path with two signed-in sessions, and put the live URL and repository into the portal. The applicant should personally review the code and exercise the app before writing the submission note. Report any remaining limitation honestly.
+The first release was deployed from a clean GitHub checkout. DeepSpace reported edge and data plane serving as confirmed. The agent verified HTTP 200 for `/`, `/home`, `/api/auth/ok`, and `/favicon.svg`; inspected desktop and phone screenshots of the landing, signed-out workspace, and signed-in board; ran `npm run type-check`, `npm run lint`, `npm run build`, and `npx deepspace test run all` (14 passing tests); and completed the two-person flow against the live app.
+
+Before submitting, the applicant should personally open the live app, sign in, create a separate board, add an option and a reason, cast a vote, and record an outcome. Open the board in another signed-in browser to see live updates and presence. Also review the code and confirm the stated tradeoff matches the intended product. This README does not claim those personal checks have happened yet.
 
 ## Build ownership
 

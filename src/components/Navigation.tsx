@@ -1,18 +1,9 @@
-/**
- * Top nav — minimal placeholder bar wired to the app's mechanisms:
- * nav.ts-driven links (with role/dev filtering), sign-in via <AuthOverlay>,
- * and sign-out. Restyle or rebuild it freely; keep the data-testid hooks
- * (`app-navigation`, `nav-sign-in-button`, `nav-user-name`, `nav-user-email`)
- * — the shipped tests rely on them. `nav-user-email` is the one that carries
- * an identity the test can check exactly: a display name is optional, the
- * email is the credential the session was opened with.
- */
+/** Workspace navigation, account menu, and sign-in entry point. */
 
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { AuthOverlay, useAuthProfileReady, signOut } from 'deepspace'
 import { ChevronDown, LogOut, Menu, X } from 'lucide-react'
-import { APP_NAME } from '../constants'
 import type { Role } from '../constants'
 import { nav } from '../nav'
 import { cn } from '../lib/utils'
@@ -71,8 +62,8 @@ export default function Navigation() {
     <>
       <nav data-testid="app-navigation" className="border-b border-border bg-background">
         <div className="mx-auto flex h-12 max-w-7xl items-center gap-4 px-4">
-          <Link to="/home" className="text-sm font-semibold text-foreground">
-            {APP_NAME}
+          <Link to="/home" className="text-base font-bold tracking-[-0.06em] text-foreground">
+            proofboard<span className="text-primary">.</span>
           </Link>
 
           <div className="hidden items-center md:flex">{visibleNav.map(navLink)}</div>
